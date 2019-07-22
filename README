@@ -1,0 +1,30 @@
+This file describes the major differences after using TPU low level API to do
+train and evaluation rather than using TPUEstimator.
+
+Purpose: Exclude TPU initialization time (i.e. tpu.initialize_system()) for
+training from the e2e running time.
+
+Code Structure: The new code has two major classes: TrainLowLevelRunner and
+EvalLowLevelRunner.
+TrainLowLevelRunner:
+  - constructor(): Python class initialization and initialize TPU.
+  - initialize()
+     1. Call build_enqueue_ops() to build input pipeline graph.
+     2. Build the TPU model graph.
+     3. Initialize dataset and all the variables in the graph.
+     4. Start the input pipeline.
+  - train(): Run the training for train_steps.
+
+EvalLowLevelRunner:
+  - constructor(): Python class initialization
+  - initialize(): Build input pipeline graph and initialize TPU.
+  - build_model(): Build TPU eval graph.
+  - predict()
+     1. Initialize dataset.
+     2. Start input pipeline
+     3. Run TPU evaluation for all the eval examples.
+
+Timing:
+  1. Timing starts after TrainLowLevelRunner::ctor() and before
+     TrainLowLevelRunner::initialize().
+  2. Timing ends after we reach the target eval accuracy.
